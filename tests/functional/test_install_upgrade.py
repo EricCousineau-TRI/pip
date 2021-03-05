@@ -40,7 +40,7 @@ def test_invalid_upgrade_strategy_causes_error(script):
 
 def test_only_if_needed_does_not_upgrade_deps_when_satisfied(
     script,
-    use_new_resolver,
+    resolver_variant,
     with_wheel
 ):
     """
@@ -62,7 +62,7 @@ def test_only_if_needed_does_not_upgrade_deps_when_satisfied(
     ), "should not have uninstalled simple==2.0"
 
     msg = "Requirement already satisfied"
-    if not use_new_resolver:
+    if resolver_variant == "legacy":
         msg = msg + ", skipping upgrade: simple"
     assert (
         msg in result.stdout
@@ -184,7 +184,7 @@ def test_upgrade_if_requested(script, with_wheel):
     )
 
 
-def test_upgrade_with_newest_already_installed(script, data, use_new_resolver):
+def test_upgrade_with_newest_already_installed(script, data, resolver_variant):
     """
     If the newest version of a package is already installed, the package should
     not be reinstalled and the user should be informed.
@@ -194,7 +194,7 @@ def test_upgrade_with_newest_already_installed(script, data, use_new_resolver):
         'install', '--upgrade', '-f', data.find_links, '--no-index', 'simple'
     )
     assert not result.files_created, 'simple upgraded when it should not have'
-    if use_new_resolver:
+    if resolver_variant == "2020-resolver":
         msg = "Requirement already satisfied"
     else:
         msg = "already up-to-date"
@@ -396,7 +396,7 @@ def test_upgrade_vcs_req_with_dist_found(script):
     assert "pypi.org" not in result.stdout, result.stdout
 
 
-class TestUpgradeDistributeToSetuptools(object):
+class TestUpgradeDistributeToSetuptools:
     """
     From pip1.4 to pip6, pip supported a set of "hacks" (see Issue #1122) to
     allow distribute to conflict with setuptools, so that the following would
@@ -421,8 +421,7 @@ class TestUpgradeDistributeToSetuptools(object):
 
     def prep_ve(self, script, version, pip_src, distribute=False):
         self.script = script
-        self.script.pip_install_local(
-            'virtualenv=={version}'.format(**locals()))
+        self.script.pip_install_local(f'virtualenv=={version}')
         args = ['virtualenv', self.script.scratch_path / 'VE']
         if distribute:
             args.insert(1, '--distribute')
@@ -470,5 +469,5 @@ def test_install_find_existing_package_canonicalize(script, req1, req2):
     result = script.pip(
         "install", "--no-index", "--find-links", pkg_container, "pkg",
     )
-    satisfied_message = "Requirement already satisfied: {}".format(req2)
+    satisfied_message = f"Requirement already satisfied: {req2}"
     assert satisfied_message in result.stdout, str(result)

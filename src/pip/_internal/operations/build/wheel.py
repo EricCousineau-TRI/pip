@@ -1,12 +1,10 @@
 import logging
 import os
+from typing import List, Optional
+
+from pip._vendor.pep517.wrappers import Pep517HookCaller
 
 from pip._internal.utils.subprocess import runner_with_spinner_message
-from pip._internal.utils.typing import MYPY_CHECK_RUNNING
-
-if MYPY_CHECK_RUNNING:
-    from typing import List, Optional
-    from pip._vendor.pep517.wrappers import Pep517HookCaller
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +31,7 @@ def build_wheel_pep517(
         logger.debug('Destination directory: %s', tempd)
 
         runner = runner_with_spinner_message(
-            'Building wheel for {} (PEP 517)'.format(name)
+            f'Building wheel for {name} (PEP 517)'
         )
         with backend.subprocess_runner(runner):
             wheel_name = backend.build_wheel(

@@ -5,6 +5,8 @@ import textwrap
 from doctest import ELLIPSIS, OutputChecker
 
 import pytest
+from pip._vendor.packaging.utils import canonicalize_name
+from pip._vendor.pkg_resources import safe_name
 
 from tests.lib import (
     _create_test_package,
@@ -16,6 +18,7 @@ from tests.lib import (
     need_mercurial,
     need_svn,
     path_to_url,
+    wheel,
 )
 
 distribute_re = re.compile('^distribute==[0-9.]+\n', re.MULTILINE)
@@ -41,7 +44,7 @@ def _check_output(result, expected):
     actual = distribute_re.sub('', actual)
 
     def banner(msg):
-        return '\n========== {msg} ==========\n'.format(**locals())
+        return f'\n========== {msg} ==========\n'
 
     assert checker.check_output(expected, actual, ELLIPSIS), (
         banner('EXPECTED') + expected + banner('ACTUAL') + actual +
@@ -80,6 +83,25 @@ def test_freeze_with_pip(script):
     assert 'pip==' in result.stdout
 
 
+def test_exclude_and_normalization(script, tmpdir):
+    req_path = wheel.make_wheel(
+        name="Normalizable_Name", version="1.0").save_to_dir(tmpdir)
+    script.pip("install", "--no-index", req_path)
+    result = script.pip("freeze")
+    assert "Normalizable-Name" in result.stdout
+    result = script.pip("freeze", "--exclude", "normalizablE-namE")
+    assert "Normalizable-Name" not in result.stdout
+
+
+def test_freeze_multiple_exclude_with_all(script, with_wheel):
+    result = script.pip('freeze', '--all')
+    assert 'pip==' in result.stdout
+    assert 'wheel==' in result.stdout
+    result = script.pip('freeze', '--all', '--exclude', 'pip', '--exclude', 'wheel')
+    assert 'pip==' not in result.stdout
+    assert 'wheel==' not in result.stdout
+
+
 def test_freeze_with_invalid_names(script):
     """
     Test that invalid names produce warnings and are passed over gracefully.
@@ -108,26 +130,23 @@ def test_freeze_with_invalid_names(script):
     )
     for pkgname in valid_pkgnames + invalid_pkgnames:
         fake_install(pkgname, script.site_packages_path)
-    result = script.pip('freeze', expect_stderr=True)
-    for pkgname in valid_pkgnames:
-        _check_output(
-            result.stdout,
-            '...{}==1.0...'.format(pkgname.replace('_', '-'))
-        )
-    for pkgname in invalid_pkgnames:
-        # Check that the full distribution repr is present.
-        dist_repr = '{} 1.0 ('.format(pkgname.replace('_', '-'))
-        expected = (
-            '...Could not generate requirement for '
-            'distribution {}...'.format(dist_repr)
-        )
-        _check_output(result.stderr, expected)
 
-    # Also check that the parse error details occur at least once.
-    # We only need to find one occurrence to know that exception details
-    # are logged.
-    expected = '...site-packages): Parse error at "...'
-    _check_output(result.stderr, expected)
+    result = script.pip('freeze', expect_stderr=True)
+
+    # Check all valid names are in the output.
+    output_lines = {line.strip() for line in result.stdout.splitlines()}
+    for name in valid_pkgnames:
+        assert f"{safe_name(name)}==1.0" in output_lines
+
+    # Check all invalid names are excluded from the output.
+    canonical_invalid_names = {canonicalize_name(n) for n in invalid_pkgnames}
+    for line in output_lines:
+        output_name, _, _ = line.partition("=")
+        assert canonicalize_name(output_name) not in canonical_invalid_names
+
+    # The invalid names should be logged.
+    for name in canonical_invalid_names:
+        assert f"Ignoring invalid distribution {name} (" in result.stderr
 
 
 @pytest.mark.git
@@ -252,7 +271,7 @@ def test_freeze_git_clone(script, tmpdir):
     _check_output(result.stdout, expected)
 
     result = script.pip(
-        'freeze', '-f', '{repo_dir}#egg=pip_test_package'.format(**locals()),
+        'freeze', '-f', f'{repo_dir}#egg=pip_test_package',
         expect_stderr=True,
     )
     expected = textwrap.dedent(
@@ -317,7 +336,7 @@ def test_freeze_git_clone_srcdir(script, tmpdir):
     _check_output(result.stdout, expected)
 
     result = script.pip(
-        'freeze', '-f', '{repo_dir}#egg=pip_test_package'.format(**locals()),
+        'freeze', '-f', f'{repo_dir}#egg=pip_test_package',
         expect_stderr=True,
     )
     expected = textwrap.dedent(
@@ -358,7 +377,8 @@ def test_freeze_mercurial_clone_srcdir(script, tmpdir):
     _check_output(result.stdout, expected)
 
     result = script.pip(
-        'freeze', '-f', '{repo_dir}#egg=pip_test_package'.format(**locals())
+        'freeze', '-f', f'{repo_dir}#egg=pip_test_package',
+        expect_stderr=True,
     )
     expected = textwrap.dedent(
         """
@@ -452,7 +472,7 @@ def test_freeze_mercurial_clone(script, tmpdir):
     _check_output(result.stdout, expected)
 
     result = script.pip(
-        'freeze', '-f', '{repo_dir}#egg=pip_test_package'.format(**locals()),
+        'freeze', '-f', f'{repo_dir}#egg=pip_test_package',
         expect_stderr=True,
     )
     expected = textwrap.dedent(
@@ -474,7 +494,7 @@ def test_freeze_bazaar_clone(script, tmpdir):
     try:
         checkout_path = _create_test_package(script, vcs='bazaar')
     except OSError as e:
-        pytest.fail('Invoking `bzr` failed: {e}'.format(e=e))
+        pytest.fail(f'Invoking `bzr` failed: {e}')
 
     result = script.run(
         'bzr', 'checkout', checkout_path, 'bzr-package'
@@ -492,7 +512,7 @@ def test_freeze_bazaar_clone(script, tmpdir):
 
     result = script.pip(
         'freeze', '-f',
-        '{checkout_path}/#egg=django-wikiapp'.format(**locals()),
+        f'{checkout_path}/#egg=django-wikiapp',
         expect_stderr=True,
     )
     expected = textwrap.dedent("""\
@@ -531,7 +551,7 @@ def test_freeze_nested_vcs(script, outer_vcs, inner_vcs):
     result = script.pip("freeze", expect_stderr=True)
     _check_output(
         result.stdout,
-        "...-e {}+...#egg=version_pkg\n...".format(inner_vcs),
+        f"...-e {inner_vcs}+...#egg=version_pkg\n...",
     )
 
 

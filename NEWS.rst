@@ -1,3 +1,66 @@
+21.0.1 (2021-01-30)
+===================
+
+Bug Fixes
+---------
+
+- commands: debug: Use packaging.version.parse to compare between versions. (`#9461 <https://github.com/pypa/pip/issues/9461>`_)
+- New resolver: Download and prepare a distribution only at the last possible
+  moment to avoid unnecessary network access when the same version is already
+  installed locally. (`#9516 <https://github.com/pypa/pip/issues/9516>`_)
+
+Vendored Libraries
+------------------
+
+- Upgrade packaging to 20.9
+
+
+21.0 (2021-01-23)
+=================
+
+Deprecations and Removals
+-------------------------
+
+- Drop support for Python 2. (`#6148 <https://github.com/pypa/pip/issues/6148>`_)
+- Remove support for legacy wheel cache entries that were created with pip
+  versions older than 20.0. (`#7502 <https://github.com/pypa/pip/issues/7502>`_)
+- Remove support for VCS pseudo URLs editable requirements. It was emitting
+  deprecation warning since version 20.0. (`#7554 <https://github.com/pypa/pip/issues/7554>`_)
+- Modernise the codebase after Python 2. (`#8802 <https://github.com/pypa/pip/issues/8802>`_)
+- Drop support for Python 3.5. (`#9189 <https://github.com/pypa/pip/issues/9189>`_)
+- Remove the VCS export feature that was used only with editable VCS
+  requirements and had correctness issues. (`#9338 <https://github.com/pypa/pip/issues/9338>`_)
+
+Features
+--------
+
+- Add ``--ignore-requires-python`` support to pip download. (`#1884 <https://github.com/pypa/pip/issues/1884>`_)
+- New resolver: Error message shown when a wheel contains inconsistent metadata
+  is made more helpful by including both values from the file name and internal
+  metadata. (`#9186 <https://github.com/pypa/pip/issues/9186>`_)
+
+Bug Fixes
+---------
+
+- Fix a regression that made ``pip wheel`` do a VCS export instead of a VCS clone
+  for editable requirements. This broke VCS requirements that need the VCS
+  information to build correctly. (`#9273 <https://github.com/pypa/pip/issues/9273>`_)
+- Fix ``pip download`` of editable VCS requirements that need VCS information
+  to build correctly. (`#9337 <https://github.com/pypa/pip/issues/9337>`_)
+
+Vendored Libraries
+------------------
+
+- Upgrade msgpack to 1.0.2.
+- Upgrade requests to 2.25.1.
+
+Improved Documentation
+----------------------
+
+- Render the unreleased pip version change notes on the news page in docs. (`#9172 <https://github.com/pypa/pip/issues/9172>`_)
+- Fix broken email link in docs feedback banners. (`#9343 <https://github.com/pypa/pip/issues/9343>`_)
+
+
 .. note
 
     You should *NOT* be adding new change log entries to this file, this
@@ -8,6 +71,302 @@
         https://pip.pypa.io/en/latest/development/contributing/#news-entries
 
 .. towncrier release notes start
+
+20.3.4 (2021-01-23)
+===================
+
+Features
+--------
+
+- ``pip wheel`` now verifies the built wheel contains valid metadata, and can be
+  installed by a subsequent ``pip install``. This can be disabled with
+  ``--no-verify``. (`#9206 <https://github.com/pypa/pip/issues/9206>`_)
+- Improve presentation of XMLRPC errors in pip search. (`#9315 <https://github.com/pypa/pip/issues/9315>`_)
+
+Bug Fixes
+---------
+
+- Fixed hanging VCS subprocess calls when the VCS outputs a large amount of data
+  on stderr. Restored logging of VCS errors that was inadvertently removed in pip
+  20.2. (`#8876 <https://github.com/pypa/pip/issues/8876>`_)
+- Fix error when an existing incompatibility is unable to be applied to a backtracked state. (`#9180 <https://github.com/pypa/pip/issues/9180>`_)
+- New resolver: Discard a faulty distribution, instead of quitting outright.
+  This implementation is taken from 20.2.2, with a fix that always makes the
+  resolver iterate through candidates from indexes lazily, to avoid downloading
+  candidates we do not need. (`#9203 <https://github.com/pypa/pip/issues/9203>`_)
+- New resolver: Discard a source distribution if it fails to generate metadata,
+  instead of quitting outright. This implementation is taken from 20.2.2, with a
+  fix that always makes the resolver iterate through candidates from indexes
+  lazily, to avoid downloading candidates we do not need. (`#9246 <https://github.com/pypa/pip/issues/9246>`_)
+
+Vendored Libraries
+------------------
+
+- Upgrade resolvelib to 0.5.4.
+
+
+20.3.3 (2020-12-15)
+===================
+
+Bug Fixes
+---------
+
+- Revert "Skip candidate not providing valid metadata", as that caused pip to be overeager about downloading from the package index. (`#9264 <https://github.com/pypa/pip/issues/9264>`_)
+
+
+20.3.2 (2020-12-15)
+===================
+
+Features
+--------
+
+- New resolver: Resolve direct and pinned (``==`` or ``===``) requirements first
+  to improve resolver performance. (`#9185 <https://github.com/pypa/pip/issues/9185>`_)
+- Add a mechanism to delay resolving certain packages, and use it for setuptools. (`#9249 <https://github.com/pypa/pip/issues/9249>`_)
+
+Bug Fixes
+---------
+
+- New resolver: The "Requirement already satisfied" log is not printed only once
+  for each package during resolution. (`#9117 <https://github.com/pypa/pip/issues/9117>`_)
+- Fix crash when logic for redacting authentication information from URLs
+  in ``--help`` is given a list of strings, instead of a single string. (`#9191 <https://github.com/pypa/pip/issues/9191>`_)
+- New resolver: Correctly implement PEP 592. Do not return yanked versions from
+  an index, unless the version range can only be satisfied by yanked candidates. (`#9203 <https://github.com/pypa/pip/issues/9203>`_)
+- New resolver: Make constraints also apply to package variants with extras, so
+  the resolver correctly avoids backtracking on them. (`#9232 <https://github.com/pypa/pip/issues/9232>`_)
+- New resolver: Discard a candidate if it fails to provide metadata from source,
+  or if the provided metadata is inconsistent, instead of quitting outright. (`#9246 <https://github.com/pypa/pip/issues/9246>`_)
+
+Vendored Libraries
+------------------
+
+- Update vendoring to 20.8
+
+Improved Documentation
+----------------------
+
+- Update documentation to reflect that pip still uses legacy resolver by default in Python 2 environments. (`#9269 <https://github.com/pypa/pip/issues/9269>`_)
+
+
+20.3.1 (2020-12-03)
+===================
+
+Deprecations and Removals
+-------------------------
+
+- The --build-dir option has been restored as a no-op, to soften the transition
+  for tools that still used it. (`#9193 <https://github.com/pypa/pip/issues/9193>`_)
+
+
+20.3 (2020-11-30)
+=================
+
+Deprecations and Removals
+-------------------------
+
+- Remove --unstable-feature flag as it has been deprecated. (`#9133 <https://github.com/pypa/pip/issues/9133>`_)
+
+Features
+--------
+
+- Add support for :pep:`600`: Future 'manylinux' Platform Tags for Portable Linux Built Distributions. (`#9077 <https://github.com/pypa/pip/issues/9077>`_)
+- The new resolver now resolves packages in a deterministic order. (`#9100 <https://github.com/pypa/pip/issues/9100>`_)
+- Add support for MacOS Big Sur compatibility tags. (`#9138 <https://github.com/pypa/pip/issues/9138>`_)
+
+Bug Fixes
+---------
+
+- New Resolver: Rework backtracking and state management, to avoid getting stuck in an infinite loop. (`#9011 <https://github.com/pypa/pip/issues/9011>`_)
+- New resolver: Check version equality with ``packaging.version`` to avoid edge
+  cases if a wheel used different version normalization logic in its filename
+  and metadata. (`#9083 <https://github.com/pypa/pip/issues/9083>`_)
+- New resolver: Show each requirement in the conflict error message only once to reduce cluttering. (`#9101 <https://github.com/pypa/pip/issues/9101>`_)
+- Fix a regression that made ``pip wheel`` generate zip files of editable
+  requirements in the wheel directory. (`#9122 <https://github.com/pypa/pip/issues/9122>`_)
+- Fix ResourceWarning in VCS subprocesses (`#9156 <https://github.com/pypa/pip/issues/9156>`_)
+- Redact auth from URL in help message. (`#9160 <https://github.com/pypa/pip/issues/9160>`_)
+- New Resolver: editable installations are done, regardless of whether
+  the already-installed distribution is editable. (`#9169 <https://github.com/pypa/pip/issues/9169>`_)
+
+Vendored Libraries
+------------------
+
+- Upgrade certifi to 2020.11.8
+- Upgrade colorama to 0.4.4
+- Upgrade packaging to 20.7
+- Upgrade pep517 to 0.9.1
+- Upgrade requests to 2.25.0
+- Upgrade resolvelib to 0.5.3
+- Upgrade toml to 0.10.2
+- Upgrade urllib3 to 1.26.2
+
+Improved Documentation
+----------------------
+
+- Add a section to the User Guide to cover backtracking during dependency resolution. (`#9039 <https://github.com/pypa/pip/issues/9039>`_)
+- Reorder and revise installation instructions to make them easier to follow. (`#9131 <https://github.com/pypa/pip/issues/9131>`_)
+
+
+20.3b1 (2020-10-31)
+===================
+
+Deprecations and Removals
+-------------------------
+
+- ``pip freeze`` will stop filtering the ``pip``, ``setuptools``, ``distribute`` and ``wheel`` packages from ``pip freeze`` output in a future version.
+  To keep the previous behavior, users should use the new ``--exclude`` option. (`#4256 <https://github.com/pypa/pip/issues/4256>`_)
+- Deprecate support for Python 3.5 (`#8181 <https://github.com/pypa/pip/issues/8181>`_)
+- Document that certain removals can be fast tracked. (`#8417 <https://github.com/pypa/pip/issues/8417>`_)
+- Document that Python versions are generally supported until PyPI usage falls below 5%. (`#8927 <https://github.com/pypa/pip/issues/8927>`_)
+- Deprecate ``--find-links`` option in ``pip freeze`` (`#9069 <https://github.com/pypa/pip/issues/9069>`_)
+
+Features
+--------
+
+- Add ``--exclude`` option to ``pip freeze`` and ``pip list`` commands to explicitly exclude packages from the output. (`#4256 <https://github.com/pypa/pip/issues/4256>`_)
+- Allow multiple values for --abi and --platform. (`#6121 <https://github.com/pypa/pip/issues/6121>`_)
+- Add option ``--format`` to subcommand ``list`` of ``pip  cache``, with ``abspath`` choice to output the full path of a wheel file. (`#8355 <https://github.com/pypa/pip/issues/8355>`_)
+- Improve error message friendliness when an environment has packages with
+  corrupted metadata. (`#8676 <https://github.com/pypa/pip/issues/8676>`_)
+- Make the ``setup.py install`` deprecation warning less noisy. We warn only
+  when ``setup.py install`` succeeded and ``setup.py bdist_wheel`` failed, as
+  situations where both fails are most probably irrelevant to this deprecation. (`#8752 <https://github.com/pypa/pip/issues/8752>`_)
+- Check the download directory for existing wheels to possibly avoid
+  fetching metadata when the ``fast-deps`` feature is used with
+  ``pip wheel`` and ``pip download``. (`#8804 <https://github.com/pypa/pip/issues/8804>`_)
+- When installing a git URL that refers to a commit that is not available locally
+  after git clone, attempt to fetch it from the remote. (`#8815 <https://github.com/pypa/pip/issues/8815>`_)
+- Include http subdirectory in ``pip cache info`` and ``pip cache purge`` commands. (`#8892 <https://github.com/pypa/pip/issues/8892>`_)
+- Cache package listings on index packages so they are guarenteed to stay stable
+  during a pip command session. This also improves performance when a index page
+  is accessed multiple times during the command session. (`#8905 <https://github.com/pypa/pip/issues/8905>`_)
+- New resolver: Tweak resolution logic to improve user experience when
+  user-supplied requirements conflict. (`#8924 <https://github.com/pypa/pip/issues/8924>`_)
+- Support Python 3.9. (`#8971 <https://github.com/pypa/pip/issues/8971>`_)
+- Log an informational message when backtracking takes multiple rounds on a specific package. (`#8975 <https://github.com/pypa/pip/issues/8975>`_)
+- Switch to the new dependency resolver by default. (`#9019 <https://github.com/pypa/pip/issues/9019>`_)
+- Remove the ``--build-dir`` option, as per the deprecation. (`#9049 <https://github.com/pypa/pip/issues/9049>`_)
+
+Bug Fixes
+---------
+
+- Propagate ``--extra-index-url`` from requirements file properly to session auth,
+  so that keyring auth will work as expected. (`#8103 <https://github.com/pypa/pip/issues/8103>`_)
+- Allow specifying verbosity and quiet level via configuration files
+  and environment variables. Previously these options were treated as
+  boolean values when read from there while through CLI the level can be
+  specified. (`#8578 <https://github.com/pypa/pip/issues/8578>`_)
+- Only converts Windows path to unicode on Python 2 to avoid regressions when a
+  POSIX environment does not configure the file system encoding correctly. (`#8658 <https://github.com/pypa/pip/issues/8658>`_)
+- List downloaded distributions before exiting ``pip download``
+  when using the new resolver to make the behavior the same as
+  that on the legacy resolver. (`#8696 <https://github.com/pypa/pip/issues/8696>`_)
+- New resolver: Pick up hash declarations in constraints files and use them to
+  filter available distributions. (`#8792 <https://github.com/pypa/pip/issues/8792>`_)
+- Avoid polluting the destination directory by resolution artifacts
+  when the new resolver is used for ``pip download`` or ``pip wheel``. (`#8827 <https://github.com/pypa/pip/issues/8827>`_)
+- New resolver: If a package appears multiple times in user specification with
+  different ``--hash`` options, only hashes that present in all specifications
+  should be allowed. (`#8839 <https://github.com/pypa/pip/issues/8839>`_)
+- Tweak the output during dependency resolution in the new resolver. (`#8861 <https://github.com/pypa/pip/issues/8861>`_)
+- Correctly search for installed distributions in new resolver logic in order
+  to not miss packages (virtualenv packages from system-wide-packages for example) (`#8963 <https://github.com/pypa/pip/issues/8963>`_)
+- Do not fail in pip freeze when encountering a ``direct_url.json`` metadata file
+  with editable=True. Render it as a non-editable ``file://`` URL until modern
+  editable installs are standardized and supported. (`#8996 <https://github.com/pypa/pip/issues/8996>`_)
+
+Vendored Libraries
+------------------
+
+- Fix devendoring instructions to explicitly state that ``vendor.txt`` should not be removed.
+  It is mandatory for ``pip debug`` command.
+
+Improved Documentation
+----------------------
+
+- Add documentation for '.netrc' support. (`#7231 <https://github.com/pypa/pip/issues/7231>`_)
+- Add OS tabs for OS-specific commands. (`#7311 <https://github.com/pypa/pip/issues/7311>`_)
+- Add note and example on keyring support for index basic-auth (`#8636 <https://github.com/pypa/pip/issues/8636>`_)
+- Added initial UX feedback widgets to docs. (`#8783 <https://github.com/pypa/pip/issues/8783>`_, `#8848 <https://github.com/pypa/pip/issues/8848>`_)
+- Add ux documentation (`#8807 <https://github.com/pypa/pip/issues/8807>`_)
+- Update user docs to reflect new resolver as default in 20.3. (`#9044 <https://github.com/pypa/pip/issues/9044>`_)
+- Improve migration guide to reflect changes in new resolver behavior. (`#9056 <https://github.com/pypa/pip/issues/9056>`_)
+
+
+20.2.4 (2020-10-16)
+===================
+
+Deprecations and Removals
+-------------------------
+
+- Document that certain removals can be fast tracked. (`#8417 <https://github.com/pypa/pip/issues/8417>`_)
+- Document that Python versions are generally supported until PyPI usage falls below 5%. (`#8927 <https://github.com/pypa/pip/issues/8927>`_)
+
+Features
+--------
+
+- New resolver: Avoid accessing indexes when the installed candidate is preferred
+  and considered good enough. (`#8023 <https://github.com/pypa/pip/issues/8023>`_)
+- Improve error message friendliness when an environment has packages with
+  corrupted metadata. (`#8676 <https://github.com/pypa/pip/issues/8676>`_)
+- Cache package listings on index packages so they are guarenteed to stay stable
+  during a pip command session. This also improves performance when a index page
+  is accessed multiple times during the command session. (`#8905 <https://github.com/pypa/pip/issues/8905>`_)
+- New resolver: Tweak resolution logic to improve user experience when
+  user-supplied requirements conflict. (`#8924 <https://github.com/pypa/pip/issues/8924>`_)
+
+Bug Fixes
+---------
+
+- New resolver: Correctly respect ``Requires-Python`` metadata to reject
+  incompatible packages in ``--no-deps`` mode. (`#8758 <https://github.com/pypa/pip/issues/8758>`_)
+- New resolver: Pick up hash declarations in constraints files and use them to
+  filter available distributions. (`#8792 <https://github.com/pypa/pip/issues/8792>`_)
+- New resolver: If a package appears multiple times in user specification with
+  different ``--hash`` options, only hashes that present in all specifications
+  should be allowed. (`#8839 <https://github.com/pypa/pip/issues/8839>`_)
+
+Improved Documentation
+----------------------
+
+- Add ux documentation (`#8807 <https://github.com/pypa/pip/issues/8807>`_)
+
+
+20.2.3 (2020-09-08)
+===================
+
+Deprecations and Removals
+-------------------------
+
+- Deprecate support for Python 3.5 (`#8181 <https://github.com/pypa/pip/issues/8181>`_)
+
+Features
+--------
+
+- Make the ``setup.py install`` deprecation warning less noisy. We warn only
+  when ``setup.py install`` succeeded and ``setup.py bdist_wheel`` failed, as
+  situations where both fails are most probably irrelevant to this deprecation. (`#8752 <https://github.com/pypa/pip/issues/8752>`_)
+
+
+20.2.2 (2020-08-11)
+===================
+
+Bug Fixes
+---------
+
+- Only attempt to use the keyring once and if it fails, don't try again.
+  This prevents spamming users with several keyring unlock prompts when they
+  cannot unlock or don't want to do so. (`#8090 <https://github.com/pypa/pip/issues/8090>`_)
+- Fix regression that distributions in system site-packages are not correctly
+  found when a virtual environment is configured with ``system-site-packages``
+  on. (`#8695 <https://github.com/pypa/pip/issues/8695>`_)
+- Disable caching for range requests, which causes corrupted wheels
+  when pip tries to obtain metadata using the feature ``fast-deps``. (`#8701 <https://github.com/pypa/pip/issues/8701>`_, `#8716 <https://github.com/pypa/pip/issues/8716>`_)
+- Always use UTF-8 to read ``pyvenv.cfg`` to match the built-in ``venv``. (`#8717 <https://github.com/pypa/pip/issues/8717>`_)
+- 2020 Resolver: Correctly handle marker evaluation in constraints and exclude
+  them if their markers do not match the current environment. (`#8724 <https://github.com/pypa/pip/issues/8724>`_)
+
 
 20.2.1 (2020-08-04)
 ===================
